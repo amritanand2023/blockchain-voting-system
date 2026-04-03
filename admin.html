@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Organization Admin Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+        }
+        .container {
+            width: 420px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        h2, h3 {
+            color: #2c3e50;
+        }
+        input {
+            width: 95%;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .connect {
+            background: #3498db;
+            color: white;
+        }
+        .add {
+            background: #27ae60;
+            color: white;
+        }
+        .start {
+            background: #8e44ad;
+            color: white;
+        }
+        .end {
+            background: #c0392b;
+            color: white;
+        }
+        .status {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        hr {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2> Organization Admin Panel</h2>
+
+<button class="connect" onclick="connectWallet()">Connect Admin Wallet</button>
+<p id="wallet"></p>
+
+<hr>
+
+<h3> Add Nominee</h3>
+
+<input id="name" placeholder="Nominee Name">
+<input id="dept" placeholder="Department">
+<input id="exp" placeholder="Experience (years)">
+
+<button class="add" onclick="addCandidate()">Add Nominee</button>
+
+<hr>
+
+<h3>🗳 Voting Control</h3>
+
+<button class="start" onclick="startElection()">Start Voting</button>
+<button class="end" onclick="endElection()">End Voting</button>
+
+<p class="status" id="msg"></p>
+
+</div>
+
+<script>
+let web3;
+let contract;
+let account;
+
+const contractAddress = "0xfD921DeD1B8852A440e5De3B15e537dD009eF6c7";
+
+const abi =[
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_crimeHistory",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_netWorth",
+				"type": "string"
+			}
+		],
+		"name": "addCandidate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			}
+		],
+		"name": "CandidateAdded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			}
+		],
+		"name": "CandidateRemoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "time",
+				"type": "uint256"
+			}
+		],
+		"name": "ElectionEnded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "time",
+				"type": "uint256"
+			}
+		],
+		"name": "ElectionStarted",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "endElection",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			}
+		],
+		"name": "removeCandidate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "startElection",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_candidateId",
+				"type": "uint256"
+			}
+		],
+		"name": "vote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "voteHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "VoteCast",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "admin",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "candidates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "crimeHistory",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "netWorth",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "voteCount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "candidatesCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "electionEnded",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "electionStarted",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getElectionStatus",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "voters",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "hasVoted",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+async function connectWallet() {
+    web3 = new Web3(window.ethereum);
+    const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+    account = accounts[0];
+
+    contract = new web3.eth.Contract(abi, contractAddress);
+
+    const admin = await contract.methods.admin().call();
+    if (account.toLowerCase() !== admin.toLowerCase()) {
+        alert(" You are not the organization admin");
+        return;
+    }
+
+    document.getElementById("wallet").innerText = "Admin: " + account;
+}
+
+async function addCandidate() {
+    const name = document.getElementById("name").value;
+    const dept = document.getElementById("dept").value;
+    const exp = document.getElementById("exp").value;
+
+    await contract.methods.addCandidate(name, dept, exp)
+        .send({ from: account });
+
+    document.getElementById("msg").innerText = "Nominee Added";
+}
+
+async function startElection() {
+    await contract.methods.startElection().send({ from: account });
+    document.getElementById("msg").innerText = "Voting Started";
+}
+
+async function endElection() {
+    await contract.methods.endElection().send({ from: account });
+    document.getElementById("msg").innerText = "Voting Ended";
+}
+</script>
+
+</body>
+</html>

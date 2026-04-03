@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Organization Voting Audit</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2f5;
+        }
+        .container {
+            width: 900px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        .box {
+            background: #f9f9f9;
+            padding: 18px;
+            margin: 15px 0;
+            border-radius: 10px;
+        }
+        .label {
+            font-weight: bold;
+            color: #34495e;
+        }
+        .event {
+            font-family: monospace;
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 8px 0;
+            white-space: pre-line;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2> Organization Blockchain Voting Audit</h2>
+
+<div class="box">
+    <p><span class="label">Admin Address:</span> <span id="admin"></span></p>
+    <p><span class="label">Voting Status:</span> <span id="status"></span></p>
+    <p><span class="label">Total Nominees:</span> <span id="candidates"></span></p>
+    <p><span class="label">Total Votes Cast:</span> <span id="votes"></span></p>
+</div>
+
+<div class="box">
+    <p class="label">Blockchain Event Logs (Audit Trail)</p>
+    <div id="logs">Loading logs…</div>
+</div>
+
+</div>
+
+<script>
+const contractAddress = "0xfD921DeD1B8852A440e5De3B15e537dD009eF6c7";
+const abi = [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_crimeHistory",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_netWorth",
+				"type": "string"
+			}
+		],
+		"name": "addCandidate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			}
+		],
+		"name": "CandidateAdded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			}
+		],
+		"name": "CandidateRemoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "time",
+				"type": "uint256"
+			}
+		],
+		"name": "ElectionEnded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "time",
+				"type": "uint256"
+			}
+		],
+		"name": "ElectionStarted",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "endElection",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			}
+		],
+		"name": "removeCandidate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "startElection",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_candidateId",
+				"type": "uint256"
+			}
+		],
+		"name": "vote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "voteHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "VoteCast",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "admin",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "candidates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "crimeHistory",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "netWorth",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "voteCount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "candidatesCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "electionEnded",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "electionStarted",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getElectionStatus",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "voters",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "hasVoted",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+async function loadAudit() {
+
+    const web3 = new Web3(window.ethereum);
+    const contract = new web3.eth.Contract(abi, contractAddress);
+
+    document.getElementById("admin").innerText =
+        await contract.methods.admin().call();
+
+    const started = await contract.methods.electionStarted().call();
+    const ended = await contract.methods.electionEnded().call();
+
+    document.getElementById("status").innerText =
+        !started ? "Not Started" : ended ? "Ended" : "Ongoing";
+
+    document.getElementById("candidates").innerText =
+        await contract.methods.candidatesCount().call();
+
+    document.getElementById("votes").innerText =
+        await contract.methods.totalVotes().call();
+
+    const logsDiv = document.getElementById("logs");
+    logsDiv.innerHTML = "";
+
+    const events = [
+        ...(await contract.getPastEvents("ElectionStarted", { fromBlock: 0, toBlock: "latest" })),
+        ...(await contract.getPastEvents("ElectionEnded", { fromBlock: 0, toBlock: "latest" })),
+        ...(await contract.getPastEvents("CandidateAdded", { fromBlock: 0, toBlock: "latest" })),
+        ...(await contract.getPastEvents("CandidateRemoved", { fromBlock: 0, toBlock: "latest" })),
+        ...(await contract.getPastEvents("VoteCast", { fromBlock: 0, toBlock: "latest" }))
+    ];
+
+    if (events.length === 0) {
+        logsDiv.innerText = "No audit logs found.";
+        return;
+    }
+
+    events
+        .sort((a, b) => b.blockNumber - a.blockNumber)
+        .forEach(e => {
+            const div = document.createElement("div");
+            div.className = "event";
+            div.innerText =
+`Event: ${e.event}
+Block: ${e.blockNumber}
+Tx Hash: ${e.transactionHash}`;
+            logsDiv.appendChild(div);
+        });
+}
+
+loadAudit();
+</script>
+
+</body>
+</html>

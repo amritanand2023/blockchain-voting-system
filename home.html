@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Organization Voting System</title>
+
+<style>
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", Arial, sans-serif;
+
+    background:
+        linear-gradient(rgba(5,10,25,0.65), rgba(5,10,25,0.65)),
+        url("bg.png") center/cover no-repeat fixed;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    overflow: hidden;
+}
+
+#particles {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    padding: 55px 45px;
+    border-radius: 28px;
+
+    background: rgba(15, 30, 60, 0.30);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+
+    border: 1px solid rgba(255,255,255,0.18);
+
+    box-shadow:
+        0 0 70px rgba(0,180,255,0.35),
+        inset 0 0 35px rgba(255,255,255,0.06);
+
+    text-align: center;
+}
+
+h1 {
+    font-size: 34px;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 40px;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+    gap: 22px;
+    margin-bottom: 35px;
+}
+
+.btn {
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: 0.35s;
+}
+
+.btn:hover {
+    transform: translateY(-4px) scale(1.05);
+}
+
+.admin  { background: #3498db; color: white; }
+.vote   { background: #2ecc71; color: black; }
+.audit  { background: #9b59b6; color: white; }
+.result { background: #f1c40f; color: black; }
+
+.footer {
+    font-size: 13px;
+    opacity: 0.85;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="container">
+
+    <h1>🏢 Organization Voting System</h1>
+    <p class="subtitle">
+        Secure • Transparent • Tamper-Proof Internal Voting
+    </p>
+
+    <div class="buttons">
+        <button class="btn admin" onclick="location.href='admin.html'">
+            Organization Admin
+        </button>
+
+        <button class="btn vote" onclick="location.href='voter_verify.html'">
+            Verify & Vote
+        </button>
+
+        <button class="btn audit" onclick="location.href='audit.html'">
+            Voting Audit
+        </button>
+
+        <button class="btn result" onclick="location.href='results.html'">
+            Voting Results
+        </button>
+    </div>
+
+    <div class="footer">
+        Powered by Blockchain • Secure Internal Voting • Fully Transparent
+    </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+
+let particles = [];
+const COUNT = 130;
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.6;
+        this.vy = (Math.random() - 0.5) * 0.6;
+        this.r = Math.random() * 2 + 1;
+    }
+    move() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,180,255,0.85)";
+        ctx.fill();
+    }
+}
+
+function connect() {
+    for (let i = 0; i < particles.length; i++) {
+        for (let j = i; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < 120) {
+                ctx.strokeStyle = `rgba(0,180,255,${1 - dist/120})`;
+                ctx.lineWidth = 0.4;
+                ctx.beginPath();
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.move(); p.draw(); });
+    connect();
+    requestAnimationFrame(animate);
+}
+
+particles = Array.from({length: COUNT}, () => new Particle());
+animate();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Organization Voting Results</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .status {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
+            padding: 18px;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+
+        .winner {
+            border: 2px solid gold;
+            box-shadow: 0 0 15px gold;
+        }
+
+        .votes {
+            font-size: 18px;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .exp { background: #2ecc71; }
+        .dept { background: #3498db; }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1> Voting Results</h1>
+    <p id="status">Connecting to blockchain...</p>
+
+    <div id="results" class="cards"></div>
+
+</div>
+
+<script>
+
+const contractAddress = "0xfD921DeD1B8852A440e5De3B15e537dD009eF6c7";
+
+const abi = [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_crimeHistory",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_netWorth",
+				"type": "string"
+			}
+		],
+		"name": "addCandidate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			}
+		],
+		"name": "CandidateAdded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			}
+		],
+		"name": "CandidateRemoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "time",
+				"type": "uint256"
+			}
+		],
+		"name": "ElectionEnded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "time",
+				"type": "uint256"
+			}
+		],
+		"name": "ElectionStarted",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "endElection",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			}
+		],
+		"name": "removeCandidate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "startElection",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_candidateId",
+				"type": "uint256"
+			}
+		],
+		"name": "vote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "voteHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "VoteCast",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "admin",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "candidates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "crimeHistory",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "netWorth",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "voteCount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "candidatesCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "electionEnded",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "electionStarted",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getElectionStatus",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "voters",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "hasVoted",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+async function loadResults() {
+    try {
+
+        if (typeof window.ethereum === "undefined") {
+            document.getElementById("status").innerText = "❌ MetaMask not installed";
+            return;
+        }
+
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+
+        const web3 = new Web3(window.ethereum);
+        const contract = new web3.eth.Contract(abi, contractAddress);
+
+        document.getElementById("results").innerHTML = "";
+
+        const started = await contract.methods.electionStarted().call();
+        const ended = await contract.methods.electionEnded().call();
+
+        let statusText = started
+            ? (ended ? "Voting Ended – Final Results" : "Voting Ongoing")
+            : "Voting Not Started";
+
+        document.getElementById("status").innerText = statusText;
+
+        const count = await contract.methods.candidatesCount().call();
+
+        if (count == 0) {
+            document.getElementById("status").innerText += " | No nominees found";
+            return;
+        }
+
+        let totalVotes = 0;
+        let candidates = [];
+
+        for (let i = 1; i <= count; i++) {
+            const c = await contract.methods.candidates(i).call();
+
+            const votes = parseInt(c.voteCount);
+
+            totalVotes += votes;
+
+            candidates.push({
+                id: c.id,
+                name: c.name,
+                dept: c.crimeHistory,   // mapped to department
+                exp: c.netWorth,        // mapped to experience
+                votes: votes
+            });
+        }
+
+        const winnerVotes = Math.max(...candidates.map(c => c.votes));
+
+        candidates.forEach(c => {
+
+            const percent = totalVotes === 0
+                ? 0
+                : ((c.votes / totalVotes) * 100).toFixed(2);
+
+            const card = document.createElement("div");
+            card.className = "card";
+
+            if (c.votes === winnerVotes && winnerVotes > 0) {
+                card.classList.add("winner");
+            }
+
+            card.innerHTML = `
+                <h3>${c.name} ${c.votes === winnerVotes && winnerVotes > 0 ? "🏆" : ""}</h3>
+                <p><b>Department:</b> ${c.dept}</p>
+                <p><b>Experience:</b> ${c.exp}</p>
+                <p class="votes">🗳 ${c.votes} Votes</p>
+                <p>${percent}% of total</p>
+                <span class="tag dept">Dept: ${c.dept}</span>
+            `;
+
+            document.getElementById("results").appendChild(card);
+        });
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById("status").innerText = "Error loading blockchain data";
+    }
+}
+
+loadResults();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Employee Verification</title>
+
+<style>
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(135deg, #232526, #414345);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+
+    .card {
+        width: 360px;
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        text-align: center;
+    }
+
+    h2 {
+        margin-bottom: 5px;
+    }
+
+    p.sub {
+        font-size: 13px;
+        opacity: 0.85;
+        margin-bottom: 20px;
+    }
+
+    input {
+        width: 95%;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        outline: none;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+    video {
+        border-radius: 12px;
+        border: 2px solid rgba(255,255,255,0.3);
+        margin-bottom: 12px;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        cursor: pointer;
+        background: #2ecc71;
+        color: black;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        transform: scale(1.04);
+        opacity: 0.95;
+    }
+
+    .msg {
+        margin-top: 15px;
+        font-size: 14px;
+        min-height: 20px;
+    }
+
+    .loading {
+        color: #f1c40f;
+    }
+
+    .error {
+        color: #e74c3c;
+    }
+
+    .success {
+        color: #2ecc71;
+    }
+
+    footer {
+        margin-top: 15px;
+        font-size: 11px;
+        opacity: 0.75;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h2>👤 Employee Verification</h2>
+<p class="sub">Verify your identity to continue organization voting</p>
+
+<input
+  id="employee_id"
+  type="text"
+  placeholder="Enter Employee ID"
+  autocomplete="off"
+/>
+
+<video id="video" autoplay width="300"></video>
+
+<button onclick="verify()">Verify Identity</button>
+
+<p class="msg" id="msg"></p>
+
+<footer>
+    Face data is used only for verification and not stored.
+</footer>
+
+</div>
+
+<script>
+const video = document.getElementById("video");
+const msg = document.getElementById("msg");
+
+/* CAMERA ACCESS */
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => video.srcObject = stream)
+.catch(() => {
+    msg.innerText = "Camera access denied";
+    msg.className = "msg error";
+});
+
+async function verify() {
+    const employee_id = document.getElementById("employee_id").value.trim();
+
+    if (!employee_id || employee_id.length < 2) {
+        msg.innerText = "Please enter a valid Employee ID";
+        msg.className = "msg error";
+        return;
+    }
+
+    msg.innerText = "Verifying face… Please wait";
+    msg.className = "msg loading";
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    const image = canvas.toDataURL("image/jpeg");
+
+    try {
+        const res = await fetch("http://127.0.0.1:5000/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ aadhaar: employee_id, image })
+        });
+
+        const data = await res.json();
+
+        if (data.success === true) {
+            msg.innerText = "Verification successful ✔ Redirecting…";
+            msg.className = "msg success";
+            localStorage.setItem("verified", "true");
+
+            setTimeout(() => {
+                window.location.href = "voter_portal.html";
+            }, 1000);
+        } else {
+            msg.innerText = "Face not matched. Try again.";
+            msg.className = "msg error";
+        }
+    } catch (err) {
+        msg.innerText = "Server not reachable";
+        msg.className = "msg error";
+    }
+}
+</script>
+
+</body>
+</html>

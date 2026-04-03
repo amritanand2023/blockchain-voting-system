@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Organization Voting</title>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+<style>
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(135deg, #141e30, #243b55);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 1000px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .wallet {
+        text-align: center;
+        font-size: 14px;
+        opacity: 0.9;
+        margin-bottom: 20px;
+    }
+
+    .status {
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .card {
+        background: rgba(255,255,255,0.12);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        transition: 0.3s;
+    }
+
+    .card:hover {
+        transform: translateY(-6px);
+    }
+
+    .vote-btn {
+        width: 100%;
+        margin-top: 15px;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        cursor: pointer;
+        background: #2ecc71;
+        color: black;
+    }
+
+    .vote-btn:disabled {
+        background: #7f8c8d;
+        cursor: not-allowed;
+    }
+
+    .tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        margin-top: 8px;
+    }
+
+    .dept {
+        background: #3498db;
+    }
+
+    footer {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 12px;
+        opacity: 0.8;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🏢 Cast Your Vote</h1>
+<p class="wallet" id="wallet">Connecting wallet…</p>
+<p class="status" id="status"></p>
+
+<div class="cards" id="candidates"></div>
+
+<footer>
+    Secure organization voting powered by blockchain.
+</footer>
+
+</div>
+
+<script>
+if (localStorage.getItem("verified") !== "true") {
+    alert("Please verify your identity first.");
+    window.location.href = "voter_verify.html";
+}
+
+const contractAddress = "0xfD921DeD1B8852A440e5De3B15e537dD009eF6c7";
+
+const abi = [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_crimeHistory",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_netWorth",
+				"type": "string"
+			}
+		],
+		"name": "addCandidate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			}
+		],
+		"name": "CandidateAdded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			}
+		],
+		"name": "CandidateRemoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "time",
+				"type": "uint256"
+			}
+		],
+		"name": "ElectionEnded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "time",
+				"type": "uint256"
+			}
+		],
+		"name": "ElectionStarted",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "endElection",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_id",
+				"type": "uint256"
+			}
+		],
+		"name": "removeCandidate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "startElection",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_candidateId",
+				"type": "uint256"
+			}
+		],
+		"name": "vote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "voteHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "VoteCast",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "admin",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "candidates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "crimeHistory",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "netWorth",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "voteCount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "candidatesCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "electionEnded",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "electionStarted",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getElectionStatus",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalVotes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "voters",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "hasVoted",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+async function load() {
+    if (!window.ethereum) {
+        alert("MetaMask is required to vote.");
+        return;
+    }
+
+    const web3 = new Web3(window.ethereum);
+    const accounts = await ethereum.request({ method: "eth_requestAccounts" });
+    const account = accounts[0];
+    document.getElementById("wallet").innerText = "Wallet: " + account;
+
+    const contract = new web3.eth.Contract(abi, contractAddress);
+
+    const started = await contract.methods.electionStarted().call();
+    const ended = await contract.methods.electionEnded().call();
+
+    if (!started) {
+        document.getElementById("status").innerText = "⚠️ Voting not started";
+        return;
+    }
+
+    if (ended) {
+        document.getElementById("status").innerText = "Voting ended  Closed";
+        return;
+    }
+
+    document.getElementById("status").innerText = " Voting is live  Choose wisely";
+
+    const voter = await contract.methods.voters(account).call();
+    if (voter.hasVoted) {
+        alert("You have already voted.");
+        return;
+    }
+
+    const count = await contract.methods.candidatesCount().call();
+
+    for (let i = 1; i <= count; i++) {
+        const c = await contract.methods.candidates(i).call();
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+            <h3>${c.name}</h3>
+            <p><b>Department:</b> ${c.crimeHistory}</p>
+            <p><b>Experience:</b> ${c.netWorth}</p>
+            <span class="tag dept">Dept: ${c.crimeHistory}</span>
+            <button class="vote-btn">Vote</button>
+        `;
+
+        card.querySelector("button").onclick = async () => {
+            try {
+                const tx = await contract.methods.vote(i).send({ from: account });
+
+                localStorage.removeItem("verified");
+
+                alert(
+                    "Vote recorded successfully!\n\n" +
+                    "Blockchain Receipt\n" +
+                    "Transaction Hash:\n" + tx.transactionHash + "\n\n" +
+                    "Block Number:\n" + tx.blockNumber
+                );
+
+                location.reload();
+            } catch (err) {
+                alert("Transaction failed");
+                console.error(err);
+            }
+        };
+
+        document.getElementById("candidates").appendChild(card);
+    }
+}
+
+load();
+</script>
+
+</body>
+</html>
