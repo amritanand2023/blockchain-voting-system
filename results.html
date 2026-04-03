@@ -367,7 +367,7 @@ async function loadResults() {
     try {
 
         if (typeof window.ethereum === "undefined") {
-            document.getElementById("status").innerText = "❌ MetaMask not installed";
+            document.getElementById("status").innerText = " MetaMask not installed";
             return;
         }
 
@@ -407,8 +407,8 @@ async function loadResults() {
             candidates.push({
                 id: c.id,
                 name: c.name,
-                dept: c.crimeHistory,   // mapped to department
-                exp: c.netWorth,        // mapped to experience
+                dept: c.crimeHistory,   
+                exp: c.netWorth,        
                 votes: votes
             });
         }
