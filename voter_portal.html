@@ -102,7 +102,7 @@
 
 <div class="container">
 
-<h1>🏢 Cast Your Vote</h1>
+<h1> Cast Your Vote</h1>
 <p class="wallet" id="wallet">Connecting wallet…</p>
 <p class="status" id="status"></p>
 
@@ -422,7 +422,7 @@ async function load() {
     const ended = await contract.methods.electionEnded().call();
 
     if (!started) {
-        document.getElementById("status").innerText = "⚠️ Voting not started";
+        document.getElementById("status").innerText = " Voting not started";
         return;
     }
 
