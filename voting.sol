@@ -20,6 +20,62 @@ pipeline {
         }
     }
 }
+
+
+
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "23mis0020/html-demo"
+    }
+
+    stages {
+
+        stage('Clone Repo') {
+            steps {
+                git branch: 'main',
+                url: 'https://github.com/amritanand2023/html-demo.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t %DOCKER_IMAGE% .'
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub',
+                usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    bat 'docker login -u %USER% -p %PASS%'
+                    bat 'docker push %DOCKER_IMAGE%'
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([file(credentialsId: 'kuberconfig', variable: 'KUBECONFIG')]) {
+                    bat '''
+                    set KUBECONFIG=%KUBECONFIG%
+                    kubectl apply -f deployment.yaml --validate=false
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'HTML CI/CD SUCCESS 🚀'
+        }
+        failure {
+            echo 'Pipeline FAILED ❌'
+        }
+    }
+}
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 contract Voting {
