@@ -452,3 +452,238 @@ loadResults();
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+🟢 TASK 1: Jenkins Familiarization
+Steps:
+1.	Open browser → http://localhost:8080 
+2.	Login to Jenkins 
+3.	Identify: 
+o	Dashboard 
+o	Manage Jenkins 
+o	New Item 
+o	Build History 
+4.	Go to:
+Manage Jenkins → System Information
+5.	Note Jenkins version 
+________________________________________
+🟢 TASK 2: Freestyle Job
+Steps:
+1.	Click New Item 
+2.	Name: Hello-Jenkins 
+3.	Select Freestyle Project → OK 
+4.	Add Build Step:
+Execute Windows batch command
+5.	Enter:
+echo Hello Jenkins
+6.	Click Save 
+7.	Click Build Now 
+________________________________________
+🟢 TASK 3: Workspace & Commands
+Steps:
+1.	Open job → Click Workspace 
+2.	Add build command:
+echo Hello > file.txt
+type file.txt
+3.	Build job 
+4.	Verify file in workspace 
+________________________________________
+🟢 TASK 4: Git Integration
+Steps:
+1.	Create repo in GitHub 
+2.	Add code (hello.py / Hello.java) 
+3.	Push code:
+git add .
+git commit -m "first commit"
+git push
+4.	In Jenkins: 
+o	Configure job 
+o	Source Code Management → Git 
+o	Add repo URL 
+5.	Build job 
+________________________________________
+🟢 TASK 5: Poll SCM
+Steps:
+1.	Go to Configure 
+2.	Enable:
+Poll SCM
+3.	Set:
+* * * * *
+4.	Save 
+5.	Modify GitHub file → Commit 
+6.	Wait → Auto build triggered 
+________________________________________
+🟢 TASK 6: Parameterized Build
+Steps:
+1.	Enable:
+This project is parameterized
+2.	Add:
+String Parameter → USERNAME
+3.	Build step:
+echo Hello %USERNAME%
+4.	Click Build with Parameters 
+5.	Enter value → Run 
+________________________________________
+🟢 TASK 7: Java Build
+Steps:
+1.	Create Hello.java 
+2.	Code:
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello from Jenkins Java");
+    }
+}
+3.	Push to GitHub 
+4.	Build step:
+javac Hello.java
+java Hello
+5.	Build job 
+________________________________________
+🟢 TASK 8: Archive Artifacts
+Steps:
+1.	Build step:
+javac Hello.java
+java Hello
+2.	Post-build:
+Archive the artifacts
+3.	Enter:
+Hello.class
+4.	Build job 
+5.	Download artifact 
+________________________________________
+🟢 TASK 9: Users & Roles
+Steps:
+1.	Go to:
+Manage Jenkins → Manage Users
+2.	Create users: user1, user2 
+3.	Go to:
+Configure Global Security
+4.	Enable:
+Matrix-based security
+5.	Assign: 
+o	user1 → Read only 
+o	user2 → Read + Build 
+________________________________________
+🟢 TASK 10: Pipeline
+Steps:
+1.	New Item → Pipeline 
+2.	Add script: 
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps { echo 'Checkout' }
+        }
+        stage('Build') {
+            steps { echo 'Build' }
+        }
+        stage('Test') {
+            steps { echo 'Test' }
+        }
+    }
+}
+3.	Build job 
+________________________________________
+🟢 TASK 11: Jenkinsfile from Git
+Steps:
+1.	Create Jenkinsfile in repo: 
+pipeline {
+    agent any
+    stages {
+        stage('Hello') {
+            steps {
+                echo 'Hello from Git'
+            }
+        }
+    }
+}
+2.	Push to GitHub 
+3.	Jenkins:
+Pipeline script from SCM
+4.	Add repo URL 
+5.	Build 
+________________________________________
+🟢 TASK 12: Post Section
+Steps:
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps { echo 'Building...' }
+        }
+    }
+    post {
+        success { echo 'Build Successful' }
+        failure { echo 'Build Failed' }
+    }
+}
+________________________________________
+🟢 TASK 13: Job Chaining
+Steps:
+1.	Create Job-A and Job-B 
+2.	Job-A → Configure 
+3.	Add:
+Build other projects → Job-B
+4.	Build Job-A 
+________________________________________
+🟢 TASK 14: Workspace Cleanup
+Steps:
+1.	Install:
+Workspace Cleanup Plugin
+2.	Configure job 
+3.	Enable:
+Delete workspace before build
+4.	Build 
+________________________________________
+🟢 TASK 15: Mini CI Project
+Steps:
+1.	Modify code → Push to Git 
+2.	Jenkins triggers build 
+3.	Build step:
+javac Hello.java
+java Hello
+4.	Archive:
+Hello.class
+5.	Add error (optional):
+javac Wrong.java
+6.	Observe success/failure
