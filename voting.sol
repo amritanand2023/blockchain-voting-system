@@ -1,4 +1,25 @@
+pipeline {
+    agent any
 
+    tools {
+        maven 'M3'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                url: '<your-repo-url>'
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                bat 'mvn clean test'
+            }
+        }
+    }
+}
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 contract Voting {
