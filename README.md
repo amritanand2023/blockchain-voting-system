@@ -118,6 +118,6 @@ blockchain-voting-system/
 
 
 
-## 📄 License
+##  License
 
 This project is for educational purposes.
