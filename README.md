@@ -4,7 +4,7 @@ This project implements a secure, transparent, and decentralized voting system u
 
 ---
 
-## 🚀 Features
+##  Features
 
 - Decentralized voting using blockchain
 - Smart contract-based voting logic
@@ -15,7 +15,7 @@ This project implements a secure, transparent, and decentralized voting system u
 
 ---
 
-## 🛠️ Technologies Used
+##  Technologies Used
 
 - Ethereum Blockchain
 - Solidity (Smart Contracts)
@@ -25,7 +25,7 @@ This project implements a secure, transparent, and decentralized voting system u
 - HTML, CSS, JavaScript
 ---
 
-## ⚙️ How It Works
+##  How It Works
 
 1. Admin connects wallet and adds candidates  
 2. Admin starts the election  
@@ -37,14 +37,14 @@ This project implements a secure, transparent, and decentralized voting system u
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 # Blockchain-Based Organization Voting System
 
 This project implements a secure, transparent, and decentralized voting system using blockchain technology. It is designed for organization-level elections where integrity and trust are important.
 
 ---
 
-## 🚀 Features
+##  Features
 
 - Decentralized voting using blockchain
 - Smart contract-based voting logic
@@ -55,7 +55,7 @@ This project implements a secure, transparent, and decentralized voting system u
 
 ---
 
-## 🛠️ Technologies Used
+##  Technologies Used
 
 - Ethereum Blockchain
 - Solidity (Smart Contracts)
@@ -66,7 +66,7 @@ This project implements a secure, transparent, and decentralized voting system u
 
 ---
 
-## ⚙️ How It Works
+##  How It Works
 
 1. Admin connects wallet and adds candidates  
 2. Admin starts the election  
@@ -78,7 +78,7 @@ This project implements a secure, transparent, and decentralized voting system u
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 blockchain-voting-system/
 │── admin.html
 │── voter_verify.html
@@ -90,7 +90,7 @@ blockchain-voting-system/
 
 ---
 
-## ▶️ How to Run
+##  How to Run
 
 1. Start Ganache (local blockchain)  
 2. Connect MetaMask to Ganache network  
@@ -100,7 +100,7 @@ blockchain-voting-system/
 
 ---
 
-## 🔐 Security Features
+##  Security Features
 
 - Immutable vote storage  
 - Smart contract validation  
@@ -109,7 +109,7 @@ blockchain-voting-system/
 
 ---
 
-## 📌 Future Scope
+##  Future Scope
 
 - Multi-factor authentication  
 - Mobile application support  
