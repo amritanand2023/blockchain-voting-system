@@ -23,7 +23,6 @@ This project implements a secure, transparent, and decentralized voting system u
 - MetaMask
 - Ganache
 - HTML, CSS, JavaScript
-
 ---
 
 ## ⚙️ How It Works
